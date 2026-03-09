@@ -9,6 +9,7 @@ import (
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
+	"google.golang.org/protobuf/encoding/protojson"
 
 	pb "github.com/ayush00git/lowkey/proto/v1"
 )
@@ -71,11 +72,19 @@ func (s *server) Connect(stream pb.Signaling_ConnectServer) error {
 				switch payload.Type {
 				case "sdp":
 					var sdp pb.SdpExchange
-					json.Unmarshal(payload.Data, &sdp)
+					if err := protojson.Unmarshal(payload.Data, &sdp); err != nil {
+						log.Printf("Error unmarshaling SDP: %v", err)
+						continue
+					}
+					log.Printf("Forwarding SDP from Redis to client %s", clientUUID)
 					resp.Payload = &pb.SignalResponse_Sdp{Sdp: &sdp}
 				case "ice":
 					var ice pb.IceCandidate
-					json.Unmarshal(payload.Data, &ice)
+					if err := protojson.Unmarshal(payload.Data, &ice); err != nil {
+						log.Printf("Error unmarshaling ICE: %v", err)
+						continue
+					}
+					log.Printf("Forwarding ICE from Redis to client %s", clientUUID)
 					resp.Payload = &pb.SignalResponse_Ice{Ice: &ice}
 				}
 
@@ -102,10 +111,12 @@ func (s *server) Connect(stream pb.Signaling_ConnectServer) error {
 
 			switch p := req.Payload.(type) {
 			case *pb.SignalRequest_Sdp:
+				log.Printf("Client %s -> %s (SDP)", clientUUID, p.Sdp.TargetUuid)
 				if err := s.router.ForwardSDP(ctx, clientUUID, p.Sdp); err != nil {
 					log.Printf("Error forwarding SDP: %v", err)
 				}
 			case *pb.SignalRequest_Ice:
+				log.Printf("Client %s -> %s (ICE)", clientUUID, p.Ice.TargetUuid)
 				if err := s.router.ForwardICE(ctx, clientUUID, p.Ice); err != nil {
 					log.Printf("Error forwarding ICE: %v", err)
 				}

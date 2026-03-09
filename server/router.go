@@ -7,6 +7,7 @@ import (
 
 	"github.com/redis/go-redis/v9"
 	pb "github.com/ayush00git/lowkey/proto/v1"
+	"google.golang.org/protobuf/encoding/protojson"
 )
 
 // Router handles Redis Pub/Sub for message routing.
@@ -45,7 +46,7 @@ type SignalPayload struct {
 }
 
 func (r *Router) ForwardSDP(ctx context.Context, fromUUID string, sdp *pb.SdpExchange) error {
-	data, _ := json.Marshal(sdp)
+	data, _ := protojson.Marshal(sdp)
 	payload := SignalPayload{
 		FromUUID: fromUUID,
 		Type:     "sdp",
@@ -55,7 +56,7 @@ func (r *Router) ForwardSDP(ctx context.Context, fromUUID string, sdp *pb.SdpExc
 }
 
 func (r *Router) ForwardICE(ctx context.Context, fromUUID string, ice *pb.IceCandidate) error {
-	data, _ := json.Marshal(ice)
+	data, _ := protojson.Marshal(ice)
 	payload := SignalPayload{
 		FromUUID: fromUUID,
 		Type:     "ice",
