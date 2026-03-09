@@ -10,20 +10,20 @@
     "test": "jest"
   },
   "dependencies": {
-    "@react-native/new-app-screen": "0.84.1",
-    "@types/uuid": "^10.0.0",
     "@nozbe/watermelondb": "^0.28.0",
     "@nozbe/with-observables": "^1.6.0",
     "@react-native/new-app-screen": "0.84.1",
+    "@types/uuid": "^10.0.0",
     "google-protobuf": "^4.0.2",
     "grpc-web": "^2.0.2",
+    "lucide-react-native": "^0.577.0",
     "react": "19.2.3",
     "react-native": "0.84.1",
     "react-native-get-random-values": "^2.0.0",
     "react-native-safe-area-context": "^5.5.2",
+    "react-native-svg": "^15.15.3",
+    "react-native-webrtc": "^124.0.7",
     "uuid": "^13.0.0"
-    "react-native-safe-area-context": "^5.5.2",
-    "react-native-webrtc": "^124.0.7"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

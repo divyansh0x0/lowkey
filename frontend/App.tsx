@@ -23,15 +23,14 @@ function App() {
   );
 }
 
+import { HomeScreen } from './src/screens/HomeScreen';
+
 function AppContent() {
   const safeAreaInsets = useSafeAreaInsets();
 
   return (
     <View style={styles.container}>
-      <NewAppScreen
-        templateFileName="App.tsx"
-        safeAreaInsets={safeAreaInsets}
-      />
+      <HomeScreen />
     </View>
   );
 }
