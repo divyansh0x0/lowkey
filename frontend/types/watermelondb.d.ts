@@ -3,11 +3,23 @@ declare module '@nozbe/watermelondb' {
     static table: string;
   }
   export class Database {
+    constructor(options: { adapter: any; modelClasses: any[] });
     get(tableName: string): any;
     write(action: () => Promise<void>): Promise<void>;
   }
   export function appSchema(options: any): any;
   export function tableSchema(options: any): any;
+}
+
+declare module '@nozbe/watermelondb/adapters/sqlite' {
+  interface SQLiteAdapterOptions {
+    schema: any;
+    jsi?: boolean;
+    onSetUpError?: (error: any) => void;
+  }
+  export default class SQLiteAdapter {
+    constructor(options: SQLiteAdapterOptions);
+  }
 }
 
 declare module '@nozbe/watermelondb/decorators' {
@@ -20,3 +32,4 @@ declare module '@nozbe/watermelondb/decorators' {
   export function json(columnName: string, sanitze: (raw: any) => any): PropertyDecorator;
   export function text(columnName: string): PropertyDecorator;
 }
+

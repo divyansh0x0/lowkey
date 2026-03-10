@@ -14,21 +14,34 @@ import {
   StatusBar
 } from 'react-native';
 
+import type { ConnectionState } from '../services/ServiceContext';
+
 interface HomeScreenProps {
   onConnect?: (targetUuid: string) => void;
+  myUuid?: string;
+  connectionState?: ConnectionState;
 }
 
-export const HomeScreen: React.FC<HomeScreenProps> = ({ onConnect }) => {
-  // Dummy local UUID
-  const myUuid = '123e4567-e89b-12d3-a456-426614174000';
-  const [targetUuid, setTargetUuid] = useState('');
+const STATUS_CONFIG: Record<ConnectionState, { color: string; label: string }> = {
+  disconnected: { color: '#EF4444', label: 'Disconnected' },
+  connecting: { color: '#F59E0B', label: 'Connecting...' },
+  registered: { color: '#10B981', label: 'Ready' },
+  negotiating: { color: '#3B82F6', label: 'Negotiating...' },
+  connected: { color: '#10B981', label: 'Peer Connected' },
+};
 
+export const HomeScreen: React.FC<HomeScreenProps> = ({ onConnect, myUuid, connectionState = 'disconnected' }) => {
+  const displayUuid = myUuid || 'Generating...';
+  const [targetUuid, setTargetUuid] = useState('');
   const [copied, setCopied] = useState(false);
 
+  const status = STATUS_CONFIG[connectionState];
+
   const handleCopy = () => {
+    if (!myUuid) return;
     Clipboard.setString(myUuid);
     setCopied(true);
-    setTimeout(() => setCopied(false), 2000); // Revert back after 2 seconds
+    setTimeout(() => setCopied(false), 2000);
   };
 
   const handleConnect = () => {
@@ -36,8 +49,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onConnect }) => {
       Alert.alert('Hold up', "You need your partner's ID to connect.");
       return;
     }
+    if (connectionState !== 'registered' && connectionState !== 'connected') {
+      Alert.alert('Not ready', 'Waiting for signaling server connection...');
+      return;
+    }
     console.log('Initiating secure P2P connection to:', targetUuid);
-    // TODO: Wire WebRTCManager.createOffer(targetUuid)
     onConnect?.(targetUuid);
   };
 
@@ -64,7 +80,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onConnect }) => {
             
             <View style={styles.uuidDisplayContainer}>
               <Text style={styles.uuidText} numberOfLines={1} ellipsizeMode="middle">
-                {myUuid}
+                {displayUuid}
               </Text>
               <TouchableOpacity style={styles.copyButton} onPress={handleCopy} activeOpacity={0.6}>
                 <Text style={styles.copyButtonText}>{copied ? 'Copied!' : 'Copy'}</Text>
@@ -98,8 +114,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onConnect }) => {
           
           {/* Status Footer */}
           <View style={styles.footer}>
-            <View style={styles.statusDot} />
-            <Text style={styles.statusText}>Awaiting Handshake</Text>
+            <View style={[styles.statusDot, { backgroundColor: status.color }]} />
+            <Text style={styles.statusText}>{status.label}</Text>
           </View>
 
         </ScrollView>
@@ -107,6 +123,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onConnect }) => {
     </SafeAreaView>
   );
 };
+
 
 const styles = StyleSheet.create({
   safeArea: {

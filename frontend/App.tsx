@@ -1,6 +1,5 @@
 /**
- * Sample React Native App
- * https://github.com/facebook/react-native
+ * Lowkey - Secure P2P Messaging
  *
  * @format
  */
@@ -14,6 +13,7 @@ import {
 
 import { ChatScreenRaw } from './src/screens/ChatScreen';
 import { HomeScreen } from './src/screens/HomeScreen';
+import { ServiceProvider, useServices } from './src/services/ServiceContext';
 
 type Screen = 'home' | 'chat';
 
@@ -23,32 +23,42 @@ function App() {
   return (
     <SafeAreaProvider>
       <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      <AppContent />
+      <ServiceProvider>
+        <AppContent />
+      </ServiceProvider>
     </SafeAreaProvider>
   );
 }
 
 function AppContent() {
-  const safeAreaInsets = useSafeAreaInsets();
+  const { myUuid, initiateConnection, connectionState, webRTCManager } = useServices();
   const [currentScreen, setCurrentScreen] = useState<Screen>('home');
   const [targetUuid, setTargetUuid] = useState<string>('');
 
-  // Mocking an initial prop payload
   const mockMessages: any[] = [
     { id: '1', ciphertext: 'Hey! Secure connection established.', sender_id: 'other', created_at: Date.now() },
   ];
 
   const handleConnect = (uuid: string) => {
     setTargetUuid(uuid);
+    initiateConnection(uuid);
     setCurrentScreen('chat');
   };
 
   return (
     <View style={styles.container}>
       {currentScreen === 'home' ? (
-        <HomeScreen onConnect={handleConnect} />
+        <HomeScreen
+          onConnect={handleConnect}
+          myUuid={myUuid}
+          connectionState={connectionState}
+        />
       ) : (
-        <ChatScreenRaw messages={mockMessages as any} targetUuid={targetUuid} onGoBack={() => setCurrentScreen('home')} />
+        <ChatScreenRaw
+          messages={mockMessages as any}
+          targetUuid={targetUuid}
+          onGoBack={() => setCurrentScreen('home')}
+        />
       )}
     </View>
   );
