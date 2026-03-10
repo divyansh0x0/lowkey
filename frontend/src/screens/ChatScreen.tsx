@@ -11,7 +11,7 @@ import {
   Platform,
   StatusBar
 } from 'react-native';
-import { Camera, Mic, Send, Lock } from 'lucide-react-native';
+import { Camera, Mic, Send, Lock, ArrowLeft } from 'lucide-react-native';
 import withObservables from '@nozbe/with-observables';
 
 // --- Type Definitions ---
@@ -25,20 +25,28 @@ interface MessageRecord {
 interface ChatScreenProps {
   messages: MessageRecord[];
   targetUuid?: string;
+  onGoBack?: () => void;
 }
 
 // Temporary myUuid for mocking "self" vs "partner" bubbles
 const MY_SUPER_DUMMY_UUID = '123e4567-e89b-12d3-a456-426614174000';
 
 // --- Inner Component ---
-const ChatScreenInner: React.FC<ChatScreenProps> = ({ messages, targetUuid }) => {
+const ChatScreenInner: React.FC<ChatScreenProps> = ({ messages: initialMessages, targetUuid, onGoBack }) => {
   const [inputText, setInputText] = useState('');
+  const [localMessages, setLocalMessages] = useState<MessageRecord[]>(initialMessages);
 
   const displayTargetUuid = targetUuid || 'Unknown Partner';
 
   const handleSend = () => {
     if (!inputText.trim()) return;
-    console.log('Sending message payload:', inputText);
+    const newMessage: MessageRecord = {
+      id: Date.now().toString(),
+      ciphertext: inputText.trim(),
+      sender_id: MY_SUPER_DUMMY_UUID,
+      created_at: Date.now(),
+    };
+    setLocalMessages(prev => [...prev, newMessage]);
     // TODO: Wire WebRTCManager.dataChannel.send() and WatermelonDB save
     setInputText('');
   };
@@ -67,7 +75,14 @@ const ChatScreenInner: React.FC<ChatScreenProps> = ({ messages, targetUuid }) =>
       >
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.brandTitle}>Lowkey</Text>
+          <View style={styles.headerTopRow}>
+            <TouchableOpacity style={styles.backBtn} onPress={onGoBack} activeOpacity={0.6}>
+              <ArrowLeft color="#000000" size={22} strokeWidth={2} />
+            </TouchableOpacity>
+            <Text style={styles.brandTitle}>Lowkey</Text>
+            {/* Spacer to keep title centered */}
+            <View style={styles.backBtn} />
+          </View>
           <View style={styles.partnerInfo}>
             <Text style={styles.partnerId} numberOfLines={1} ellipsizeMode="middle">
               {displayTargetUuid}
@@ -81,7 +96,7 @@ const ChatScreenInner: React.FC<ChatScreenProps> = ({ messages, targetUuid }) =>
 
         {/* Message List */}
         <FlatList
-          data={messages}
+          data={localMessages}
           keyExtractor={(item) => item.id}
           renderItem={renderMessage}
           contentContainerStyle={styles.messageList}
@@ -150,6 +165,20 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#F0F0F0',
     alignItems: 'center',
+  },
+  headerTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginBottom: 2,
+  },
+  backBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   brandTitle: {
     fontFamily: 'StoryScript-Regular',

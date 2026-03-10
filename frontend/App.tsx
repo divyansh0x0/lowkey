@@ -5,12 +5,17 @@
  * @format
  */
 
-import { NewAppScreen } from '@react-native/new-app-screen';
+import React, { useState } from 'react';
 import { StatusBar, StyleSheet, useColorScheme, View } from 'react-native';
 import {
   SafeAreaProvider,
   useSafeAreaInsets,
 } from 'react-native-safe-area-context';
+
+import { ChatScreenRaw } from './src/screens/ChatScreen';
+import { HomeScreen } from './src/screens/HomeScreen';
+
+type Screen = 'home' | 'chat';
 
 function App() {
   const isDarkMode = useColorScheme() === 'dark';
@@ -23,22 +28,28 @@ function App() {
   );
 }
 
-import { ChatScreenRaw } from './src/screens/ChatScreen';
-import { HomeScreen } from './src/screens/HomeScreen';
-
 function AppContent() {
   const safeAreaInsets = useSafeAreaInsets();
+  const [currentScreen, setCurrentScreen] = useState<Screen>('home');
+  const [targetUuid, setTargetUuid] = useState<string>('');
 
   // Mocking an initial prop payload
   const mockMessages: any[] = [
     { id: '1', ciphertext: 'Hey! Secure connection established.', sender_id: 'other', created_at: Date.now() },
-    { id: '2', ciphertext: 'Awesome, I see it! This flat UI looks great.', sender_id: '123e4567-e89b-12d3-a456-426614174000', created_at: Date.now() + 1000 },
   ];
+
+  const handleConnect = (uuid: string) => {
+    setTargetUuid(uuid);
+    setCurrentScreen('chat');
+  };
 
   return (
     <View style={styles.container}>
-      <ChatScreenRaw messages={mockMessages as any} />
-      <HomeScreen />
+      {currentScreen === 'home' ? (
+        <HomeScreen onConnect={handleConnect} />
+      ) : (
+        <ChatScreenRaw messages={mockMessages as any} targetUuid={targetUuid} onGoBack={() => setCurrentScreen('home')} />
+      )}
     </View>
   );
 }

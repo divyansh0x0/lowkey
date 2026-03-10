@@ -14,7 +14,11 @@ import {
   StatusBar
 } from 'react-native';
 
-export const HomeScreen = () => {
+interface HomeScreenProps {
+  onConnect?: (targetUuid: string) => void;
+}
+
+export const HomeScreen: React.FC<HomeScreenProps> = ({ onConnect }) => {
   // Dummy local UUID
   const myUuid = '123e4567-e89b-12d3-a456-426614174000';
   const [targetUuid, setTargetUuid] = useState('');
@@ -34,6 +38,7 @@ export const HomeScreen = () => {
     }
     console.log('Initiating secure P2P connection to:', targetUuid);
     // TODO: Wire WebRTCManager.createOffer(targetUuid)
+    onConnect?.(targetUuid);
   };
 
   return (
