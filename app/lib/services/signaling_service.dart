@@ -10,6 +10,7 @@ class SignalingService {
 
   final _onSessionCreated = StreamController<Map<String, dynamic>>.broadcast();
   final _onSessionJoined = StreamController<Map<String, dynamic>>.broadcast();
+  final _onSessionRequest = StreamController<Map<String, dynamic>>.broadcast();
   final _onKeyExchange = StreamController<Map<String, dynamic>>.broadcast();
   final _onSignal = StreamController<Map<String, dynamic>>.broadcast();
   final _onError = StreamController<Map<String, dynamic>>.broadcast();
@@ -17,6 +18,7 @@ class SignalingService {
 
   Stream<Map<String, dynamic>> get onSessionCreated => _onSessionCreated.stream;
   Stream<Map<String, dynamic>> get onSessionJoined => _onSessionJoined.stream;
+  Stream<Map<String, dynamic>> get onSessionRequest => _onSessionRequest.stream;
   Stream<Map<String, dynamic>> get onKeyExchange => _onKeyExchange.stream;
   Stream<Map<String, dynamic>> get onSignal => _onSignal.stream;
   Stream<Map<String, dynamic>> get onError => _onError.stream;
@@ -65,6 +67,10 @@ class SignalingService {
         final payload = jsonDecode(jsonEncode(msg['payload'])) as Map<String, dynamic>;
         _onSessionJoined.add(payload);
         break;
+      case 'session:request':
+        final payload = jsonDecode(jsonEncode(msg['payload'])) as Map<String, dynamic>;
+        _onSessionRequest.add(payload);
+        break;
       case 'key:exchange':
         _onKeyExchange.add(msg);
         break;
@@ -96,9 +102,19 @@ class SignalingService {
     _send({'type': 'session:join', 'sessionId': sessionId});
   }
 
-  /// Connect to a user by their username (server creates session automatically).
+  /// Connect to a user by their username (server sends request to target).
   void connectToUser(String targetUsername) {
     _send({'type': 'session:connect', 'target': targetUsername});
+  }
+
+  /// Accept an incoming connection request.
+  void acceptSession(String initiator) {
+    _send({'type': 'session:accept', 'target': initiator});
+  }
+
+  /// Decline an incoming connection request.
+  void declineSession(String initiator) {
+    _send({'type': 'session:decline', 'target': initiator});
   }
 
   /// Send our X25519 public key to the peer.
@@ -148,6 +164,7 @@ class SignalingService {
     disconnect();
     _onSessionCreated.close();
     _onSessionJoined.close();
+    _onSessionRequest.close();
     _onKeyExchange.close();
     _onSignal.close();
     _onError.close();

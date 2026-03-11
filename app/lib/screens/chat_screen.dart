@@ -58,14 +58,16 @@ class _ChatScreenState extends State<ChatScreen> {
 
     _subs.add(_signaling.onSessionJoined.listen((payload) {
       final peer = payload['peer'] as String;
-      
-      setState(() {
-        _peer = peer;
-      });
-      
-      // Send our X25519 public key to the peer
-      _signaling.sendPublicKey(peer, _crypto.publicKeyBase64);
-      _showSnackbar('connecting to $peer... exchanging keys');
+
+      if (_isInitiator) {
+        // We initiated — proceed immediately
+        setState(() => _peer = peer);
+        _signaling.sendPublicKey(peer, _crypto.publicKeyBase64);
+        _showSnackbar('connecting to $peer... exchanging keys');
+      } else {
+        // Someone is connecting to us — ask for consent first
+        _showConnectionRequestDialog(peer);
+      }
     }));
 
     // Handle incoming public key from peer → derive shared secret
@@ -149,6 +151,72 @@ class _ChatScreenState extends State<ChatScreen> {
     setState(() => _messages.add(msg));
     _msgController.clear();
     _scrollToBottom();
+  }
+
+  void _showConnectionRequestDialog(String from) {
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          'incoming request',
+          style: GoogleFonts.caveat(
+            fontSize: 28,
+            fontWeight: FontWeight.w700,
+            color: const Color(0xFF1A1A2E),
+          ),
+        ),
+        content: Text(
+          '@$from wants to chat with you',
+          style: GoogleFonts.inter(
+            fontSize: 14,
+            color: const Color(0xFF616161),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              _showSnackbar('declined request from $from');
+            },
+            child: Text(
+              'Decline',
+              style: GoogleFonts.inter(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFFE57373),
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              setState(() => _peer = from);
+              _signaling.sendPublicKey(from, _crypto.publicKeyBase64);
+              _showSnackbar('accepted — connecting to $from...');
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF1A1A2E),
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            child: Text(
+              'Accept',
+              style: GoogleFonts.inter(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   void _scrollToBottom() {
